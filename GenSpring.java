@@ -7,11 +7,11 @@ import java.util.*;
  */
 class GenSpring {
 
-	public static String camelCase(String str){
+	private String camelCase(String str){
 		return str.toLowerCase().charAt(0)+str.substring(1);
 	}
 
-	public static void mkdir(String path){
+	private void mkdir(String path){
     	try{
 			Path p = Paths.get(path); 
 			if (Files.exists(p)){
@@ -29,7 +29,7 @@ class GenSpring {
 	    }
     }
 
-	public static void writeFile(String path, String content){
+	private void writeFile(String path, String content){
     	try{
 			Path p = Paths.get(path); 
 			if (Files.exists(p)){
@@ -63,20 +63,23 @@ class GenSpring {
 		TARGET_DIR
 		;
 	}
+
+	final private HashMap<Keys,String> entities = new HashMap<>();
+
 	public static void main(String args[]){
-
-
 
 		if (args.length<2){
 			System.err.println("Usage:");
-			System.err.println("  java GenSpring com.example.myproject [../ExistsingTargetDir]");
+			System.err.println("  java GenSpring com.example.myproject MyClass [../ExistsingTargetDir]");
 			System.exit(0);
 		}
-		String pkg = args[0];
-		String entity = args[1];
-		String targetdir = args.length>2 ? args[2] : "./";
-		Map entities = new HashMap(Map.of(
-			Keys.PACKAGE, pkg,
+		new GenSpring(args[0], args[1], args.length>2 ? args[2] : "./");
+	}
+
+	public GenSpring(String fullNameProject, String entity, String targetDir){
+
+		entities.putAll(Map.of(
+			Keys.PACKAGE, fullNameProject,
 			Keys.DAL, "dal",
 			Keys.REPOSITORIES, "repositories",
 			Keys.SERVICES, "services",
@@ -87,8 +90,10 @@ class GenSpring {
 			Keys.ENTITY_LOWER, entity.toLowerCase(),
 			Keys.LENGTH_100, "100"
 	   	));
-		entities.put(Keys.TARGET_DIR, targetdir);
-		entities.put(Keys.ENTITY_CAMEL, camelCase(entity));
+		entities.putAllMap.of(
+			Keys.TARGET_DIR, targetDir,
+			Keys.ENTITY_CAMEL, camelCase(entity)
+		);
 
 
 		//------------------------------------------------------------------------------------
@@ -429,6 +434,3 @@ public class %sController {
 		);
 	}
 }
-
-
-
