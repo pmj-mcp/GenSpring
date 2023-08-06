@@ -2,51 +2,12 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /** Call : java GenSpring com.example.myproject NameOfEntityClass
  */
 class GenSpring {
-
-	private String camelCase(String str){
-		return str.toLowerCase().charAt(0)+str.substring(1);
-	}
-
-	private void mkdir(String path){
-    	try{
-			Path p = Paths.get(path); 
-			if (Files.exists(p)){
-				if (!Files.isDirectory(p)){
-					System.err.printf("%s exists but is not a directory\n",p);
-					System.exit(0);
-				}
-			} else {
-				System.out.printf("%s not exists. Creating...\n",p);
-				Files.createDirectory(p);
-			}
-	    } catch (Exception e){
-	    	e.printStackTrace();
-	    	System.exit(0);
-	    }
-    }
-
-	private void writeFile(String path, String content){
-    	try{
-			Path p = Paths.get(path); 
-			if (Files.exists(p)){
-				System.out.printf("%s already exists\n",p);
-			} else {
-				System.out.printf("%s not exists. Creating...\n",p);
-				Files.writeString(Paths.get(path),
-					content, 
-                   	StandardCharsets.UTF_8,
-                   	StandardOpenOption.CREATE
-                );
-			}
-	    } catch (IOException e){
-	    	e.printStackTrace();
-	    	System.exit(0);
-	    }
-    }
 
 	enum Keys{
 		PACKAGE,
@@ -433,4 +394,71 @@ public class %sController {
 			)
 		);
 	}
+
+	private String camelCase(String str){
+		return str.toLowerCase().charAt(0)+str.substring(1);
+	}
+
+	private void mkdir(String path){
+    	try{
+			Path p = Paths.get(path); 
+			if (Files.exists(p)){
+				if (!Files.isDirectory(p)){
+					System.err.printf("%s exists but is not a directory\n",p);
+					System.exit(0);
+				}
+			} else {
+				System.out.printf("%s not exists. Creating...\n",p);
+				Files.createDirectory(p);
+			}
+	    } catch (Exception e){
+	    	e.printStackTrace();
+	    	System.exit(0);
+	    }
+    }
+
+	private void writeFile(String path, String content){
+    	try{
+			Path p = Paths.get(path); 
+			if (Files.exists(p)){
+				System.out.printf("%s already exists\n",p);
+			} else {
+				System.out.printf("%s not exists. Creating...\n",p);
+				Files.writeString(Paths.get(path),
+					content, 
+                   	StandardCharsets.UTF_8,
+                   	StandardOpenOption.CREATE
+                );
+			}
+	    } catch (IOException e){
+	    	e.printStackTrace();
+	    	System.exit(0);
+	    }
+    }
+
+	private String regexReplaceParamsEnum(String template, Map<Test, String> hashMap) {
+		return regexReplaceParams(
+			template, 
+			hashMap
+			.entrySet()
+			.stream()
+			.collect(Collectors.toMap(entry -> entry.getKey().toString(),entry -> entry.getValue()))
+		);
+	}
+
+	private String regexReplaceParams(String template, Map<String, String> hashMap) {
+		return hashMap
+			.entrySet()
+			.stream()
+			.reduce(
+				template, 
+				(s, e) -> Pattern
+							.compile("[$]\\{"+e.getKey()+"\\}")
+							.matcher(s)
+							.replaceAll(e.getValue()), 
+				(s, s2) -> s
+				);
+	}
+
+
 }
