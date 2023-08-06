@@ -39,50 +39,84 @@ class GenSpring {
 
 	public GenSpring(String fullNameProject, String entity, String targetDir){
 
-		entities.putAll(Map.of(
-			Keys.PACKAGE, fullNameProject,
-			Keys.DAL, "dal",
-			Keys.REPOSITORIES, "repositories",
-			Keys.SERVICES, "services",
-			Keys.CONTROLLERS, "controllers",
-			Keys.MODELS, "models",
-			Keys.ENTITIES, "entities",
-			Keys.ENTITY, entity,
-			Keys.ENTITY_LOWER, entity.toLowerCase(),
-			Keys.LENGTH_100, "100"
-	   	));
-		entities.putAllMap.of(
-			Keys.TARGET_DIR, targetDir,
-			Keys.ENTITY_CAMEL, camelCase(entity)
+		entities.putAll(
+			Map.of(
+				Keys.PACKAGE, fullNameProject,
+				Keys.DAL, "dal",
+				Keys.REPOSITORIES, "repositories",
+				Keys.SERVICES, "services",
+				Keys.CONTROLLERS, "controllers",
+				Keys.MODELS, "models",
+				Keys.ENTITIES, "entities",
+				Keys.ENTITY, entity,
+				Keys.ENTITY_LOWER, entity.toLowerCase(),
+				Keys.ENTITY_CAMEL, camelCase(entity)
+			)
+		);
+		entities.putAll(
+			Map.of(
+				Keys.TARGET_DIR, targetDir,
+				Keys.LENGTH_100, "100"
+			)
 		);
 
 
 		//------------------------------------------------------------------------------------
 
-		System.out.printf("Entity : %s Creating...\n",entity);
-	   	mkdir(String.format("%s/%s",entities.get(Keys.TARGET_DIR),entities.get(Keys.DAL)));
-	   	mkdir(String.format("%s/%s/%s",entities.get(Keys.TARGET_DIR),entities.get(Keys.DAL),entities.get(Keys.ENTITIES)));
+		System.out.printf("Entity : %s Creating...\n", entity);
+	   	createDALDir();
+	   	createDALEntitiesDir();
 		//------------------------------------------------------------------------------------
-	   	writeFile(
-	   		String.format("%s/%s/%s/%sEntity.java",entities.get(Keys.TARGET_DIR), entities.get(Keys.DAL),entities.get(Keys.ENTITIES),entities.get(Keys.ENTITY)),
-	   		String.format("""
-package %s.%s.%s; 
+	   	create_DAL_Entities_EntityEntity_JavaFile();
+
+		//------------------------------------------------------------------------------------
+	   	createDALRepositoriesDir();
+		//------------------------------------------------------------------------------------
+	   	create_DAL_Repositories_EntityRepository_JavaFile();
+
+		//------------------------------------------------------------------------------------
+	   	createServicesDir();
+		//------------------------------------------------------------------------------------
+	   	create_Services_EntityService_JavaFile();
+	   	create_Servives_EntityServiceImpl_JavaFile();
+
+		//------------------------------------------------------------------------------------
+		createControllersDir();
+		createControllersModelsDir();
+		//------------------------------------------------------------------------------------
+		create_Controllers_Models_Entity_JavaFile();
+		create_Controllers_EntityController_JavaFile();
+	}
+
+	private void createDALDir() {
+		mkdir(regexReplaceParamsEnum("${TARGET_DIR}/${DAL}", entities));
+	}
+
+	private void createDALEntitiesDir() {
+		mkdir(regexReplaceParamsEnum("${TARGET_DIR}/${DAL}/${ENTITIES}", entities));
+	}
+
+	private void create_DAL_Entities_EntityEntity_JavaFile() {
+		writeFile(
+	   		regexReplaceParamsEnum("${TARGET_DIR}/${DAL}/${ENTITIES}/${ENTITY}Entity.java", entities),
+	   		regexReplaceParamsEnum("""
+package ${PACKAGE}.${DAL}.${ENTITIES}; 
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-@Entity(name = \"%s\")	// Nom de l'entité Spring
-@Table(name = \"%s\")	// Nom de la table en DB
+@Entity(name = \"${ENTITY}\")	// Nom de l'entité Spring
+@Table(name = \"${ENTITY_LOWER}\")	// Nom de la table en DB
 @Getter
 @Setter
-public class %sEntity {
+public class ${ENTITY}Entity {
 	@Id		// Primary Key
 	@GeneratedValue(strategy = GenerationType.IDENTITY)	//Auto-Incrémentée
 	private Integer id;
 	
 	@Column (
-		length = %s/*,
+		length = ${LENGTH_100}/*,
 		name = "name",	//Permet de spécifier la nom du champ en DB (par def : nom du membre lowercase()-
 		unique = true,	//Rend le champs unique en DB (par def: false)
 		nullable = true	//Rend le champ nullable zn DB (par def: false)
@@ -90,83 +124,67 @@ public class %sEntity {
 	)
 	private String name;
 }""",
-				entities.get(Keys.PACKAGE),
-				entities.get(Keys.DAL),
-				entities.get(Keys.ENTITIES),
-				entities.get(Keys.ENTITY),
-				entities.get(Keys.ENTITY_LOWER),
-				entities.get(Keys.ENTITY),
-				entities.get(Keys.LENGTH_100)
+				entities
 			)
 		);
+	}
 
-		//------------------------------------------------------------------------------------
-	   	mkdir(String.format("%s/%s/%s",entities.get(Keys.TARGET_DIR),entities.get(Keys.DAL),entities.get(Keys.REPOSITORIES)));
-		//------------------------------------------------------------------------------------
-	   	writeFile(
-	   		String.format("%s/%s/%s/%sRepository.java",entities.get(Keys.TARGET_DIR), entities.get(Keys.DAL),entities.get(Keys.REPOSITORIES),entities.get(Keys.ENTITY)),
-	   		String.format("""
-package %s.%s.%s; 
+	private void createDALRepositoriesDir() {
+		mkdir(regexReplaceParamsEnum("${TARGET_DIR}/${DAL}/${REPOSITORIES}", entities));
+	}
 
-import %s.%s.%s.%sEntity;
+	private void create_DAL_Repositories_EntityRepository_JavaFile() {
+		writeFile(
+	   		regexReplaceParamsEnum("${TARGET_DIR}/${DAL}/${REPOSITORIES}/${ENTITY}Repository.java", entities),
+	   		regexReplaceParamsEnum("""
+package ${PACKAGE}.${DAL}.${REPOSITORIES}; 
+
+import ${PACKAGE}.${DAL}.${ENTITIES}.${ENTITY}Entity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface %sRepository extends JpaRepository<%sEntity, Integer> {
+public interface ${ENTITY}Repository extends JpaRepository<${ENTITY}Entity, Integer> {
 }""",
-				entities.get(Keys.PACKAGE),
-				entities.get(Keys.DAL),
-				entities.get(Keys.REPOSITORIES),
-				entities.get(Keys.PACKAGE),	//Import
-				entities.get(Keys.DAL),
-				entities.get(Keys.ENTITIES),
-				entities.get(Keys.ENTITY),
-				entities.get(Keys.ENTITY),		//interface ...Repository
-				entities.get(Keys.ENTITY)		//<...Entity,
+				entities
 			)
 		);
+	}
 
-		//------------------------------------------------------------------------------------
-	   	mkdir(String.format("%s/%s",entities.get(Keys.TARGET_DIR),entities.get(Keys.SERVICES)));
-		//------------------------------------------------------------------------------------
-	   	writeFile(
-	   		String.format("%s/%s/%sService.java",entities.get(Keys.TARGET_DIR), entities.get(Keys.SERVICES),entities.get(Keys.ENTITY)),
-	   		String.format("""
-package %s.%s;
+	private void createServicesDir() {
+		mkdir(regexReplaceParamsEnum("${TARGET_DIR}/${SERVICES}", entities));
+	}
 
-import %s.%s.%s.%sEntity;
+	private void create_Services_EntityService_JavaFile() {
+		writeFile(
+	   		regexReplaceParamsEnum("${TARGET_DIR}/${SERVICES}/${ENTITY}Service.java", entities),
+	   		regexReplaceParamsEnum("""
+package ${PACKAGE}.${SERVICES};
+
+import ${PACKAGE}.${DAL}.${ENTITIES}.${ENTITY}Entity;
 
 import java.util.Optional;
 import java.util.Collection;
 
-public interface %sService {
-    Collection<%sEntity> findAll();
-    Optional<%sEntity> findOneById(int id);
+public interface ${ENTITY}Service {
+    Collection<${ENTITY}Entity> findAll();
+    Optional<${ENTITY}Entity> findOneById(int id);
 
-    void insert(%sEntity entity);
+    void insert(${ENTITY}Entity entity);
 }""",
-				entities.get(Keys.PACKAGE), //Pkg
-				entities.get(Keys.SERVICES),
-				entities.get(Keys.PACKAGE), //Import
-				entities.get(Keys.DAL),
-				entities.get(Keys.ENTITIES),
-				entities.get(Keys.ENTITY),
-				entities.get(Keys.ENTITY),	//Interface
-				entities.get(Keys.ENTITY),	//findAll
-				entities.get(Keys.ENTITY),	//findonebyid
-				entities.get(Keys.ENTITY)	//Insert
+				entities
 			)
 		);
+	}
 
-		//------------------------------------------------------------------------------------
-	   	writeFile(
-	   		String.format("%s/%s/%sServiceImpl.java",entities.get(Keys.TARGET_DIR), entities.get(Keys.SERVICES),entities.get(Keys.ENTITY)),
-	   		String.format("""
-package %s.%s;
+	private void create_Servives_EntityServiceImpl_JavaFile() {
+		writeFile(
+	   		regexReplaceParamsEnum("${TARGET_DIR}/${SERVICES}/${ENTITY}ServiceImpl.java", entities),
+	   		regexReplaceParamsEnum("""
+package ${PACKAGE}.${SERVICES};
 
-import %s.%s.%s.%sEntity;
-import %s.%s.%s.%sRepository;
+import ${PACKAGE}.${DAL}.${ENTITIES}.${ENTITY}Entity;
+import ${PACKAGE}.${DAL}.${REPOSITORIES}.${ENTITY}Repository;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -174,65 +192,46 @@ import java.util.Optional;
 import java.util.Collection;
 
 @Service
-public class %sServiceImpl implements %sService {
-    private final %sRepository %sRepository;
+public class ${ENTITY}ServiceImpl implements ${ENTITY}Service {
+    private final ${ENTITY}Repository ${ENTITY_CAMEL}Repository;
 
 
-    public %sServiceImpl(%sRepository %sRepository) {
-        this.%sRepository = %sRepository;
+    public ${ENTITY}ServiceImpl(${ENTITY}Repository ${ENTITY_CAMEL}Repository) {
+        this.${ENTITY_CAMEL}Repository = ${ENTITY_CAMEL}Repository;
     }
 
-    public Collection<%sEntity> findAll() {
-        return this.%sRepository.findAll();
+    public Collection<${ENTITY}Entity> findAll() {
+        return this.${ENTITY_CAMEL}Repository.findAll();
     }
 
-    public Optional<%sEntity> findOneById(int id) {
-        return this.%sRepository.findById(id);
+    public Optional<${ENTITY}Entity> findOneById(int id) {
+        return this.${ENTITY_CAMEL}Repository.findById(id);
     }
 
-    public void insert(%sEntity entity) {
-        this.%sRepository.save(entity);
+    public void insert(${ENTITY}Entity entity) {
+        this.${ENTITY_CAMEL}Repository.save(entity);
     }
 }""",
-				entities.get(Keys.PACKAGE), //Pkg
-				entities.get(Keys.SERVICES),
-				entities.get(Keys.PACKAGE), //Import Entity
-				entities.get(Keys.DAL),
-				entities.get(Keys.ENTITIES),
-				entities.get(Keys.ENTITY),
-				entities.get(Keys.PACKAGE), //Import Repository
-				entities.get(Keys.DAL),
-				entities.get(Keys.REPOSITORIES),
-				entities.get(Keys.ENTITY),
-				entities.get(Keys.ENTITY),	//Class
-				entities.get(Keys.ENTITY),	//Impl
-				entities.get(Keys.ENTITY),	//Repository
-				entities.get(Keys.ENTITY_CAMEL),
-				entities.get(Keys.ENTITY),	//ctor
-				entities.get(Keys.ENTITY),
-				entities.get(Keys.ENTITY_CAMEL),
-				entities.get(Keys.ENTITY_CAMEL),	//init
-				entities.get(Keys.ENTITY_CAMEL),
-				entities.get(Keys.ENTITY),	//findAll
-				entities.get(Keys.ENTITY_CAMEL),	//repository.findAll
-				entities.get(Keys.ENTITY),	//findonebyid
-				entities.get(Keys.ENTITY_CAMEL),	//repository.findonebyid
-				entities.get(Keys.ENTITY),	//Insert
-				entities.get(Keys.ENTITY_CAMEL)	//repository.save
+				entities
 			)
 		);
+	}
 
+	private void createControllersDir() {
+		mkdir(regexReplaceParamsEnum("${TARGET_DIR}/${CONTROLLERS}", entities));
+	}
 
-		//------------------------------------------------------------------------------------
-		mkdir(String.format("%s/%s",entities.get(Keys.TARGET_DIR),entities.get(Keys.CONTROLLERS)));
-		mkdir(String.format("%s/%s/%s",entities.get(Keys.TARGET_DIR),entities.get(Keys.CONTROLLERS),entities.get(Keys.MODELS)));
-		//------------------------------------------------------------------------------------
+	private void createControllersModelsDir() {
+		mkdir(regexReplaceParamsEnum("${TARGET_DIR}/${CONTROLLERS}/${MODELS}", entities));
+	}
+
+	private void create_Controllers_Models_Entity_JavaFile() {
 		writeFile(
-			String.format("%s/%s/%s/%s.java",entities.get(Keys.TARGET_DIR), entities.get(Keys.CONTROLLERS),entities.get(Keys.MODELS),entities.get(Keys.ENTITY)),
-			String.format("""
-package %s.%s.%s;
+			regexReplaceParamsEnum("${TARGET_DIR}/${CONTROLLERS}/${MODELS}/${ENTITY}.java", entities),
+			regexReplaceParamsEnum("""
+package ${PACKAGE}.${CONTROLLERS}.${MODELS};
 
-import %s.%s.%s.%sEntity;
+import ${PACKAGE}.${DAL}.${ENTITIES}.${ENTITY}Entity;
 
 import jakarta.validation.constraints.NotBlank;
 import org.hibernate.validator.constraints.Length;
@@ -243,57 +242,42 @@ import lombok.Getter;
 @Builder
 @Setter
 @Getter
-public class %s {
+public class ${ENTITY} {
 
     private Integer id;
 
     @NotBlank
-    @Length(max = %s)
+    @Length(max = ${LENGTH_100})
     private String name;
 
-    public static %s fromEntity(%sEntity entity) {
-        %s.%sBuilder builder = new %s.%sBuilder()
+    public static ${ENTITY} fromEntity(${ENTITY}Entity entity) {
+        ${ENTITY}.${ENTITY}Builder builder = new ${ENTITY}.${ENTITY}Builder()
                 .id(entity.getId())
                 .name(entity.getName());
 
         return builder.build();
     }
 
-    public %sEntity toEntity() {
-        %sEntity entity = new %sEntity();
+    public ${ENTITY}Entity toEntity() {
+        ${ENTITY}Entity entity = new ${ENTITY}Entity();
         entity.setName(getName());
         return entity;
     }
 }""",
-				entities.get(Keys.PACKAGE),	//Pkg
-				entities.get(Keys.CONTROLLERS),
-				entities.get(Keys.MODELS),
-				entities.get(Keys.PACKAGE), //Import Entity
-				entities.get(Keys.DAL),
-				entities.get(Keys.ENTITIES),
-				entities.get(Keys.ENTITY),
-				entities.get(Keys.ENTITY),	//Class ...
-				entities.get(Keys.LENGTH_100),	//Length(Max=...
-				entities.get(Keys.ENTITY),	//... fromEntity(
-				entities.get(Keys.ENTITY),	//...Entity
-				entities.get(Keys.ENTITY),	//...Builder
-				entities.get(Keys.ENTITY),
-				entities.get(Keys.ENTITY),
-				entities.get(Keys.ENTITY),
-				entities.get(Keys.ENTITY),	//...Entity toEntity(
-				entities.get(Keys.ENTITY),	//...Entity
-				entities.get(Keys.ENTITY)	//...Entity
+				entities
 			)
 		);
-		//------------------------------------------------------------------------------------
-		writeFile(
-				String.format("%s/%s/%sController.java",entities.get(Keys.TARGET_DIR), entities.get(Keys.CONTROLLERS),entities.get(Keys.ENTITY)),
-				String.format("""
-package %s.%s;
+	}
 
-import %s.%s.%sService;
-import %s.%s.%s.%sEntity;
-import %s.%s.%s.%s;
+	private void create_Controllers_EntityController_JavaFile() {
+		writeFile(
+				regexReplaceParamsEnum("${TARGET_DIR}/${CONTROLLERS}/${ENTITY}Controller.java", entities),
+				regexReplaceParamsEnum("""
+package ${PACKAGE}.${CONTROLLERS};
+
+import ${PACKAGE}.${SERVICES}.${ENTITY}Service;
+import ${PACKAGE}.${DAL}.${ENTITIES}.${ENTITY}Entity;
+import ${PACKAGE}.${CONTROLLERS}.${MODELS}.${ENTITY};
 
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -309,88 +293,50 @@ import java.util.List;
 import java.util.Collection;
 
 @RestController
-@RequestMapping(path = {"/%ss"})
-public class %sController {
-    private final %sService %sService;
+@RequestMapping(path = {"/${ENTITY}s"})
+public class ${ENTITY}Controller {
+    private final ${ENTITY}Service ${ENTITY_CAMEL}Service;
 
-    public %sController(%sService %sService) {
-        this.%sService = %sService;
+    public ${ENTITY}Controller(${ENTITY}Service ${ENTITY_CAMEL}Service) {
+        this.${ENTITY_CAMEL}Service = ${ENTITY_CAMEL}Service;
     }
 
     @GetMapping(path = {"", "/"})
-    public ResponseEntity<List<%s>> getAllAction() {
-        Collection<%sEntity> response = this.%sService.findAll();
+    public ResponseEntity<List<${ENTITY}>> getAllAction() {
+        Collection<${ENTITY}Entity> response = this.${ENTITY_CAMEL}Service.findAll();
 
-        List<%s> %sList = response.stream()
-                .map(%s::fromEntity)
+        List<${ENTITY}> ${ENTITY_CAMEL}List = response.stream()
+                .map(${ENTITY}::fromEntity)
                 .toList();
 
-        return ResponseEntity.ok(%sList);
+        return ResponseEntity.ok(${ENTITY_CAMEL}List);
     }
 
     @GetMapping(path = {"/{id}"})
-    public ResponseEntity<%s> getOneAction(
+    public ResponseEntity<${ENTITY}> getOneAction(
             @PathVariable(name = "id") int id
     ) {
-        %sEntity entity = this.%sService.findOneById(id)
+        ${ENTITY}Entity entity = this.${ENTITY_CAMEL}Service.findOneById(id)
                 .orElseThrow();
 
-        return ResponseEntity.ok(%s.fromEntity(entity));
+        return ResponseEntity.ok(${ENTITY}.fromEntity(entity));
     }
 
     @PostMapping(path = {"", "/"})
-    public ResponseEntity<%s> post%sAction(
-            @Valid @RequestBody %s form
+    public ResponseEntity<${ENTITY}> post${ENTITY}Action(
+            @Valid @RequestBody ${ENTITY} form
     ) {
-        %sEntity entity = form.toEntity();
+        ${ENTITY}Entity entity = form.toEntity();
 
-        this.%sService.insert(entity);
+        this.${ENTITY_CAMEL}Service.insert(entity);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(%s.fromEntity(entity));
+                .body(${ENTITY}.fromEntity(entity));
     }
 
 }""",
-				entities.get(Keys.PACKAGE), //Pkg
-				entities.get(Keys.CONTROLLERS),
-				entities.get(Keys.PACKAGE), //Import Service
-				entities.get(Keys.SERVICES),
-				entities.get(Keys.ENTITY),
-				entities.get(Keys.PACKAGE), //Import Entity
-				entities.get(Keys.DAL),
-				entities.get(Keys.ENTITIES),
-				entities.get(Keys.ENTITY),
-				entities.get(Keys.PACKAGE), //Import Model
-				entities.get(Keys.CONTROLLERS),
-				entities.get(Keys.MODELS),
-				entities.get(Keys.ENTITY),
-				entities.get(Keys.ENTITY), //RequestMapping
-				entities.get(Keys.ENTITY),	//Class
-				entities.get(Keys.ENTITY),	//var Service
-				entities.get(Keys.ENTITY_CAMEL),
-				entities.get(Keys.ENTITY),	//ctor
-				entities.get(Keys.ENTITY),
-				entities.get(Keys.ENTITY_CAMEL),
-				entities.get(Keys.ENTITY_CAMEL),
-				entities.get(Keys.ENTITY_CAMEL),
-				entities.get(Keys.ENTITY),	//getAllAction
-				entities.get(Keys.ENTITY),
-				entities.get(Keys.ENTITY_CAMEL),		//...service
-				entities.get(Keys.ENTITY),		//List<...>
-				entities.get(Keys.ENTITY_CAMEL),		//...list
-				entities.get(Keys.ENTITY),		//map(...
-				entities.get(Keys.ENTITY_CAMEL),		//return
-				entities.get(Keys.ENTITY),	//getOneAction
-				entities.get(Keys.ENTITY),		//...Entity
-				entities.get(Keys.ENTITY_CAMEL),		//...service
-				entities.get(Keys.ENTITY),		//return
-				entities.get(Keys.ENTITY),	//<...> post*Action
-				entities.get(Keys.ENTITY),		//post...Action
-				entities.get(Keys.ENTITY),		//Param
-				entities.get(Keys.ENTITY),		//...Entity
-				entities.get(Keys.ENTITY_CAMEL),		//...service
-				entities.get(Keys.ENTITY)		//return
+				entities
 			)
 		);
 	}
@@ -436,7 +382,7 @@ public class %sController {
 	    }
     }
 
-	private String regexReplaceParamsEnum(String template, Map<Test, String> hashMap) {
+	private String regexReplaceParamsEnum(String template, Map<Keys, String> hashMap) {
 		return regexReplaceParams(
 			template, 
 			hashMap
@@ -459,6 +405,5 @@ public class %sController {
 				(s, s2) -> s
 				);
 	}
-
 
 }
