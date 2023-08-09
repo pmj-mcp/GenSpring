@@ -35,7 +35,7 @@ public class GenSpringGui {
    }
 
    private void createWindow() {    
-      JFrame frame = new JFrame("Swing Tester");
+      JFrame frame = new JFrame("Spring Squeleton Entity Generator");
       frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       createUI(frame);
       frame.setSize(560, 200);      
@@ -84,7 +84,8 @@ public class GenSpringGui {
             //pb.setValue(0);
             //pb.setVisible(true);
             lbResult.setText("<html>Generate "+tfEntity.getText()+" to " + tfPath.getText() +"...</html>");
-            new GenSpring(tfProject.getText(), tfEntity.getText(), tfPath.getText());
+            String targetdir = tfPath.getText().replace("\\","/");
+            new GenSpring(tfProject.getText(), tfEntity.getText(), targetdir);
             lbResult.setText(lbResult.getText().replace("...</html>","<br /> Generated</html>"));
             //pb.setValue(5);
          }
